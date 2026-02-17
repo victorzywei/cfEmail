@@ -55,7 +55,10 @@ function misconfigured(missing: string[]) {
 
 function getMissingCoreConfig(env: Env): string[] {
   const missing: string[] = [];
-  if (!(env as Partial<Env>).CFMAILDB) missing.push("CFMAILDB binding");
+  const db = (env as Partial<Env>).CFMAILDB as unknown;
+  const hasD1Binding = !!db && typeof db === "object" && typeof (db as { prepare?: unknown }).prepare === "function";
+  if (!hasD1Binding) missing.push("CFMAILDB D1 binding");
+
   if (!(env as Partial<Env>).JWT_SECRET) missing.push("JWT_SECRET secret");
   return missing;
 }
@@ -65,6 +68,11 @@ function getMissingSendConfig(env: Env): string[] {
   if (!(env as Partial<Env>).RESEND_API_KEY) missing.push("RESEND_API_KEY secret");
   if (!(env as Partial<Env>).RESEND_FROM) missing.push("RESEND_FROM secret");
   return missing;
+}
+
+function hasR2Binding(env: Env): boolean {
+  const bucket = (env as Partial<Env>).MAIL_RAW as unknown;
+  return !!bucket && typeof bucket === "object" && typeof (bucket as { get?: unknown }).get === "function";
 }
 
 function parseCookie(cookieHeader: string | null): Record<string, string> {
@@ -674,6 +682,11 @@ async function routeApi(request: Request, env: Env): Promise<Response | null> {
 
 async function handleInboundEmail(message: EmailMessage, env: Env): Promise<void> {
   try {
+    if (!hasR2Binding(env)) {
+      message.setReject("MAIL_RAW R2 binding is missing");
+      return;
+    }
+
     const subject = message.headers.get("subject") || "(No Subject)";
     const rawBuffer = await new Response(message.raw).arrayBuffer();
     const rawKey = `inbound/${Date.now()}-${crypto.randomUUID()}.eml`;

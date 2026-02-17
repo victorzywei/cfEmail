@@ -6,10 +6,3 @@ workers_dev = true
 [assets]
 directory = "./public"
 binding = "ASSETS"
-
-
-[vars]
-APP_NAME  = "个人邮箱"
-# RESEND_API_KEY
-# RESEND_FROM
-# JWT_SECRET
