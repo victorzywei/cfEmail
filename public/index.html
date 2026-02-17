@@ -1,0 +1,127 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mail Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="background-layer"></div>
+    <main class="shell">
+      <section id="auth-card" class="card auth-card">
+        <div class="brand">
+          <div class="brand-mark">M</div>
+          <div>
+            <h1>Mail Console</h1>
+            <p>企业邮箱控制台</p>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-mode="login">登录</button>
+          <button class="tab" data-mode="register">注册</button>
+        </div>
+
+        <form id="auth-form" class="form-grid">
+          <label>
+            邮箱
+            <input type="email" name="email" required placeholder="you@example.com" />
+          </label>
+          <label>
+            密码
+            <input type="password" name="password" required minlength="8" placeholder="至少 8 位" />
+          </label>
+          <button type="submit" class="primary">继续</button>
+        </form>
+      </section>
+
+      <section id="app" class="app hidden">
+        <header class="card topbar">
+          <div>
+            <h2>邮箱工作台</h2>
+            <p id="user-email"></p>
+          </div>
+          <button id="logout-btn" class="ghost">退出登录</button>
+        </header>
+
+        <section class="grid">
+          <article class="card pane compose-pane">
+            <h3>写邮件</h3>
+            <form id="send-form" class="form-grid">
+              <label>收件人 <input type="text" name="to" required placeholder="多个地址用逗号分隔" /></label>
+              <label>抄送（Cc） <input type="text" name="cc" placeholder="可选" /></label>
+              <label>密送（Bcc） <input type="text" name="bcc" placeholder="可选" /></label>
+              <label>主题 <input type="text" name="subject" required maxlength="180" /></label>
+              <label>正文 <textarea name="text" rows="9" required></textarea></label>
+              <div class="actions-row">
+                <button type="submit" class="primary">发送</button>
+                <button type="button" id="save-draft-btn" class="ghost">保存草稿</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="card pane">
+            <div class="pane-head">
+              <h3>收件箱</h3>
+              <button id="refresh-btn" class="ghost">刷新</button>
+            </div>
+            <div class="toolbar">
+              <input id="inbox-q" type="text" placeholder="搜索主题/发件人" />
+              <select id="inbox-folder">
+                <option value="inbox">收件箱</option>
+                <option value="archive">归档</option>
+              </select>
+              <select id="inbox-state">
+                <option value="all">全部</option>
+                <option value="unread">未读</option>
+                <option value="starred">星标</option>
+              </select>
+            </div>
+            <div id="inbox-list" class="inbox-list"></div>
+          </article>
+
+          <article class="card pane">
+            <div class="pane-head">
+              <h3>已发送</h3>
+              <button id="refresh-sent-btn" class="ghost">刷新</button>
+            </div>
+            <div class="toolbar">
+              <input id="sent-q" type="text" placeholder="搜索主题/收件人" />
+              <select id="sent-state">
+                <option value="all">全部</option>
+                <option value="starred">星标</option>
+              </select>
+            </div>
+            <div id="sent-list" class="inbox-list"></div>
+          </article>
+
+          <article class="card pane">
+            <div class="pane-head">
+              <h3>草稿箱</h3>
+              <button id="refresh-draft-btn" class="ghost">刷新</button>
+            </div>
+            <div id="draft-list" class="inbox-list"></div>
+          </article>
+
+          <article class="card pane wide">
+            <div class="pane-head">
+              <h3>邮件详情</h3>
+              <div class="actions-row" id="detail-actions"></div>
+            </div>
+            <pre id="mail-detail" class="mail-detail">请先选择一封邮件</pre>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

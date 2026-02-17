@@ -1,0 +1,25 @@
+﻿name = "cfmail"
+main = "src/worker.ts"
+compatibility_date = "2026-02-17"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cfmail-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "MAIL_RAW"
+bucket_name = "cfmail-raw"
+
+[vars]
+APP_NAME = "MailConsole"
+
+# Secrets (set by wrangler secret put):
+# RESEND_API_KEY
+# RESEND_FROM
+# JWT_SECRET
