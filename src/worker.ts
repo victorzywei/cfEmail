@@ -43,6 +43,30 @@ function unauthorized(message = "Unauthorized") {
   return json({ error: message }, { status: 401 });
 }
 
+function misconfigured(missing: string[]) {
+  return json(
+    {
+      error: "Server configuration missing",
+      missing,
+    },
+    { status: 500 },
+  );
+}
+
+function getMissingCoreConfig(env: Env): string[] {
+  const missing: string[] = [];
+  if (!(env as Partial<Env>).CFMAILDB) missing.push("CFMAILDB binding");
+  if (!(env as Partial<Env>).JWT_SECRET) missing.push("JWT_SECRET secret");
+  return missing;
+}
+
+function getMissingSendConfig(env: Env): string[] {
+  const missing: string[] = [];
+  if (!(env as Partial<Env>).RESEND_API_KEY) missing.push("RESEND_API_KEY secret");
+  if (!(env as Partial<Env>).RESEND_FROM) missing.push("RESEND_FROM secret");
+  return missing;
+}
+
 function parseCookie(cookieHeader: string | null): Record<string, string> {
   if (!cookieHeader) return {};
   const out: Record<string, string> = {};
@@ -240,6 +264,9 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
 }
 
 async function handleSendMail(request: Request, env: Env): Promise<Response> {
+  const missingSend = getMissingSendConfig(env);
+  if (missingSend.length) return misconfigured(missingSend);
+
   const session = await requireAuth(request, env);
   if (!session) return unauthorized();
 
@@ -570,6 +597,10 @@ async function handleDeleteDraft(request: Request, env: Env, id: number): Promis
 
 async function routeApi(request: Request, env: Env): Promise<Response | null> {
   const url = new URL(request.url);
+  if (url.pathname.startsWith("/api/")) {
+    const missingCore = getMissingCoreConfig(env);
+    if (missingCore.length) return misconfigured(missingCore);
+  }
 
   if (url.pathname === "/api/health") {
     return json({ ok: true, app: env.APP_NAME, now: new Date().toISOString() });
