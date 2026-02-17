@@ -2,7 +2,3 @@
 main = "src/worker.ts"
 compatibility_date = "2026-02-17"
 workers_dev = true
-
-[assets]
-directory = "./public"
-binding = "ASSETS"
