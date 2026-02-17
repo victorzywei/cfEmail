@@ -14,7 +14,7 @@ binding = "CFMAILDB"
 binding = "MAIL_RAW"
 
 [vars]
-APP_NAME = "MailConsole"
+APP_NAME = "个人邮箱"
 
 # Secrets (set by wrangler secret put):
 # RESEND_API_KEY

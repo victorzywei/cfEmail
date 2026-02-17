@@ -1,5 +1,5 @@
 ﻿export interface Env {
-  DB: D1Database;
+  CFMAILDB: D1Database;
   MAIL_RAW: R2Bucket;
   ASSETS: Fetcher;
   APP_NAME: string;
@@ -186,11 +186,11 @@ async function handleRegister(request: Request, env: Env): Promise<Response> {
   if (!isValidEmail(email)) return badRequest("invalid email");
   if (password.length < 8) return badRequest("password must be at least 8 characters");
 
-  const existed = await env.DB.prepare("SELECT id FROM users WHERE email = ?1").bind(email).first<{ id: number }>();
+  const existed = await env.CFMAILDB.prepare("SELECT id FROM users WHERE email = ?1").bind(email).first<{ id: number }>();
   if (existed) return json({ error: "email already registered" }, { status: 409 });
 
   const { hash, salt } = await hashPassword(password);
-  const result = await env.DB.prepare(
+  const result = await env.CFMAILDB.prepare(
     "INSERT INTO users (email, password_hash, salt) VALUES (?1, ?2, ?3)",
   )
     .bind(email, hash, salt)
@@ -216,7 +216,7 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
   const body = await readJson<{ email?: string; password?: string }>(request);
   if (!body?.email || !body?.password) return badRequest("email and password are required");
   const email = body.email.trim().toLowerCase();
-  const user = await env.DB.prepare("SELECT id, email, password_hash, salt FROM users WHERE email = ?1")
+  const user = await env.CFMAILDB.prepare("SELECT id, email, password_hash, salt FROM users WHERE email = ?1")
     .bind(email)
     .first<{ id: number; email: string; password_hash: string; salt: string }>();
 
@@ -289,7 +289,7 @@ async function handleSendMail(request: Request, env: Env): Promise<Response> {
   }
 
   const provider = (data || {}) as { id?: string };
-  await env.DB.prepare(
+  await env.CFMAILDB.prepare(
     `INSERT INTO sent_emails (user_id, sender, to_list, cc_list, bcc_list, subject, body_text, provider_id)
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`,
   )
@@ -336,7 +336,7 @@ async function handleInbox(request: Request, env: Env): Promise<Response> {
     binds.push(like, like, like);
   }
 
-  const rows = await env.DB.prepare(
+  const rows = await env.CFMAILDB.prepare(
     `SELECT id, recipient, sender, subject, snippet, size_bytes, is_read, is_starred, folder, received_at
      FROM inbound_emails
      WHERE ${where}
@@ -357,7 +357,7 @@ async function handleInbox(request: Request, env: Env): Promise<Response> {
       received_at: string;
     }>();
 
-  const total = await env.DB.prepare(`SELECT COUNT(*) AS count FROM inbound_emails WHERE ${where}`)
+  const total = await env.CFMAILDB.prepare(`SELECT COUNT(*) AS count FROM inbound_emails WHERE ${where}`)
     .bind(...binds)
     .first<{ count: number }>();
 
@@ -368,7 +368,7 @@ async function handleInboxDetail(request: Request, env: Env, id: number): Promis
   const session = await requireAuth(request, env);
   if (!session) return unauthorized();
 
-  const row = await env.DB.prepare(
+  const row = await env.CFMAILDB.prepare(
     `SELECT id, recipient, sender, subject, snippet, raw_key, size_bytes, is_read, is_starred, folder, received_at
      FROM inbound_emails WHERE id = ?1`,
   )
@@ -406,7 +406,7 @@ async function handleInboxPatch(request: Request, env: Env, id: number): Promise
   const session = await requireAuth(request, env);
   if (!session) return unauthorized();
 
-  const row = await env.DB.prepare("SELECT id, recipient FROM inbound_emails WHERE id = ?1")
+  const row = await env.CFMAILDB.prepare("SELECT id, recipient FROM inbound_emails WHERE id = ?1")
     .bind(id)
     .first<{ id: number; recipient: string }>();
   if (!row) return json({ error: "not found" }, { status: 404 });
@@ -432,7 +432,7 @@ async function handleInboxPatch(request: Request, env: Env, id: number): Promise
   }
   if (!sets.length) return badRequest("nothing to update");
 
-  await env.DB.prepare(`UPDATE inbound_emails SET ${sets.join(", ")} WHERE id = ?`)
+  await env.CFMAILDB.prepare(`UPDATE inbound_emails SET ${sets.join(", ")} WHERE id = ?`)
     .bind(...binds, id)
     .run();
   return json({ ok: true });
@@ -456,7 +456,7 @@ async function handleSent(request: Request, env: Env): Promise<Response> {
     binds.push(like, like, like);
   }
 
-  const rows = await env.DB.prepare(
+  const rows = await env.CFMAILDB.prepare(
     `SELECT id, sender, to_list, cc_list, bcc_list, subject, sent_at, provider_id, is_starred
      FROM sent_emails
      WHERE ${where}
@@ -476,7 +476,7 @@ async function handleSent(request: Request, env: Env): Promise<Response> {
       is_starred: number;
     }>();
 
-  const total = await env.DB.prepare(`SELECT COUNT(*) AS count FROM sent_emails WHERE ${where}`)
+  const total = await env.CFMAILDB.prepare(`SELECT COUNT(*) AS count FROM sent_emails WHERE ${where}`)
     .bind(...binds)
     .first<{ count: number }>();
   return json({ items: rows.results || [], page, pageSize, total: total?.count || 0, state, q });
@@ -488,7 +488,7 @@ async function handleSentPatch(request: Request, env: Env, id: number): Promise<
   const body = await readJson<{ isStarred?: boolean }>(request);
   if (!body || typeof body.isStarred !== "boolean") return badRequest("isStarred is required");
 
-  const result = await env.DB.prepare(
+  const result = await env.CFMAILDB.prepare(
     "UPDATE sent_emails SET is_starred = ?1 WHERE id = ?2 AND user_id = ?3",
   )
     .bind(body.isStarred ? 1 : 0, id, session.uid)
@@ -501,7 +501,7 @@ async function handleDrafts(request: Request, env: Env): Promise<Response> {
   const session = await requireAuth(request, env);
   if (!session) return unauthorized();
 
-  const rows = await env.DB.prepare(
+  const rows = await env.CFMAILDB.prepare(
     `SELECT id, to_list, cc_list, bcc_list, subject, body_text, created_at, updated_at
      FROM drafts
      WHERE user_id = ?1
@@ -542,7 +542,7 @@ async function handleSaveDraft(request: Request, env: Env): Promise<Response> {
   const text = body.text || "";
 
   if (body.id) {
-    await env.DB.prepare(
+    await env.CFMAILDB.prepare(
       `UPDATE drafts
        SET to_list = ?1, cc_list = ?2, bcc_list = ?3, subject = ?4, body_text = ?5, updated_at = datetime('now')
        WHERE id = ?6 AND user_id = ?7`,
@@ -552,7 +552,7 @@ async function handleSaveDraft(request: Request, env: Env): Promise<Response> {
     return json({ ok: true, id: body.id });
   }
 
-  const created = await env.DB.prepare(
+  const created = await env.CFMAILDB.prepare(
     `INSERT INTO drafts (user_id, to_list, cc_list, bcc_list, subject, body_text)
      VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
   )
@@ -564,7 +564,7 @@ async function handleSaveDraft(request: Request, env: Env): Promise<Response> {
 async function handleDeleteDraft(request: Request, env: Env, id: number): Promise<Response> {
   const session = await requireAuth(request, env);
   if (!session) return unauthorized();
-  await env.DB.prepare("DELETE FROM drafts WHERE id = ?1 AND user_id = ?2").bind(id, session.uid).run();
+  await env.CFMAILDB.prepare("DELETE FROM drafts WHERE id = ?1 AND user_id = ?2").bind(id, session.uid).run();
   return json({ ok: true });
 }
 
@@ -651,7 +651,7 @@ async function handleInboundEmail(message: EmailMessage, env: Env): Promise<void
       httpMetadata: { contentType: "message/rfc822" },
     });
 
-    await env.DB.prepare(
+    await env.CFMAILDB.prepare(
       `INSERT INTO inbound_emails (recipient, sender, subject, snippet, raw_key, size_bytes)
        VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
     )

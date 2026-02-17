@@ -1,4 +1,4 @@
-﻿# Mail Console
+﻿# 个人邮箱
 
 现代化 UI 邮箱系统，支持：
 - 注册 / 登录（D1 + JWT Cookie）
