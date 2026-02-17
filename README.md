@@ -16,17 +16,8 @@ npm install
 
 ## 2. 创建 Cloudflare 资源（免费）
 
-1. 创建 D1 数据库
-```bash
-wrangler d1 create cfmail-db
-```
-把返回的 `database_id` 填入 `wrangler.toml`。
-
-2. 创建 R2 bucket（保存邮件原文）
-```bash
-wrangler r2 bucket create cfmail-raw
-```
-
+1. 在 Cloudflare 控制台创建 D1 数据库（记下名称/ID）
+2.  在 Dashboard 的 “Workers” -> “Settings” (或 Pages) 里把 D1 绑定为 `CFMAILDB`，同样把 R2 bucket 绑定为 `MAIL_RAW`，不需要在 `wrangler.toml` 中暴露 ID。
 3. 应用数据库迁移（必须执行到最新）
 ```bash
 wrangler d1 migrations apply cfmail-db --remote

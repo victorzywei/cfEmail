@@ -8,13 +8,10 @@ directory = "./public"
 binding = "ASSETS"
 
 [[d1_databases]]
-binding = "DB"
-database_name = "cfmail-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+binding = "CFMAILDB"
 
 [[r2_buckets]]
 binding = "MAIL_RAW"
-bucket_name = "cfmail-raw"
 
 [vars]
 APP_NAME = "MailConsole"
