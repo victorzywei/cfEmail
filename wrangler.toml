@@ -9,9 +9,7 @@ binding = "ASSETS"
 
 
 [vars]
-APP_NAME = "个人邮箱"
-
-# Secrets (set by wrangler secret put):
+APP_NAME  = "个人邮箱"
 # RESEND_API_KEY
 # RESEND_FROM
 # JWT_SECRET
