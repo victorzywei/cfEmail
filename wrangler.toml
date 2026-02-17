@@ -7,11 +7,6 @@ workers_dev = true
 directory = "./public"
 binding = "ASSETS"
 
-[[d1_databases]]
-binding = "CFMAILDB"
-
-[[r2_buckets]]
-binding = "MAIL_RAW"
 
 [vars]
 APP_NAME = "个人邮箱"
