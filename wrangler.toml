@@ -15,12 +15,3 @@ database_name = "cfemail-db"
 [[r2_buckets]]
 binding = "MAIL_RAW"
 bucket_name = "cfemail-raw"
-
-
-
-[vars]
-APP_NAME  = "个人邮箱"
-# RESEND_API_KEY
-# RESEND_FROM
-# JWT_SECRET
-
